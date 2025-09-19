@@ -1,0 +1,42 @@
+{
+  "background_color": "#000000",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "CoinUp",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "CoinUp",
+  "start_url": "https://coinup-lp.netlify.app",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "https://coinup-lp.netlify.app/logo.png",
+      "type": "image/png",
+      "sizes": "1024x1024"
+    }
+  ],
+  "id": "Com.coinup.app",
+  "description": "Complete daily tasks, upgrade your VIP level, and watch your USDT balance grow. Join our community, invite friends for big commissions, and take control of your crypto earnings. Simple, secure, and rewarding. Download now and start earning today!",
+  "lang": "en",
+  "shortcuts": [
+    {
+      "name": "Recharge",
+      "url": "/?action=recharge",
+      "description": "Add funds to your account"
+    },
+    {
+      "name": "Withdraw",
+      "url": "/?action=withdraw",
+      "description": "Withdraw funds from your account"
+    },
+    {
+      "name": "Tasks",
+      "url": "/?action=tasks",
+      "description": "View your daily tasks"
+    }
+  ],
+  "categories": [
+    "business",
+    "finance"
+  ]
+}
