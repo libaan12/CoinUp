@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoinUp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background-color: #111827; color: white; font-family: sans-serif; }
+        .page-content, .tab-content { display: none; }
+        .page-content.active, .tab-content.active { display: block; }
+        .bottom-nav-item.active { color: #3b82f6; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .user-info-card { background-color: #1F2937; border-radius: 0.75rem; padding: 1.25rem; position: relative; display: flex; justify-content: space-between; align-items: center; min-height: 120px; }
+        .task-view-btn { flex: 1; padding: 0.75rem; border-radius: 9999px; border: none; background-color: #374151; color: #9CA3AF; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .task-view-btn.active { background-color: #4B5563; color: white; }
+        .vip-card-new { background-color: #1F2937; border-radius: 0.75rem; padding: 1rem; position: relative; overflow: hidden; }
+        .vip-badge { position: absolute; top: 1rem; left: 1rem; background-color: #FBBF24; color: #111827; padding: 0.125rem 0.625rem; border-radius: 0.25rem; font-weight: 700; font-size: 0.75rem; }
+        .vip-content { display: grid; grid-template-columns: 64px 1fr; gap: 1rem; align-items: center; padding-top: 2.5rem; }
+        .vip-logo { width: 64px; height: 64px; background-color: black; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
+        .vip-details .detail-row { display: flex; justify-content: space-between; font-size: 0.875rem; color: #9CA3AF; margin-bottom: 0.5rem; }
+        .vip-details .detail-row .value { font-weight: 600; color: #6EE7B7; }
+        .vip-action { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
+        .unlock-btn { background: none; color: #FBBF24; border: 1px solid #FBBF24; border-radius: 9999px; padding: 0.5rem 1rem; font-weight: 700; cursor: pointer; }
+        .active-badge { background-color: #10B981; color: white; border-radius: 9999px; padding: 0.5rem 1.25rem; font-weight: 700; }
+        .history-card { background-color: #1F2937; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .skeleton { background-color: #374151; border-radius: 1rem; position: relative; overflow: hidden; }
+        .skeleton::before { content: ''; position: absolute; top: 0; left: -150%; height: 100%; width: 150%; background: linear-gradient(to right, transparent 0%, #4B5563 50%, transparent 100%); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { left: -150%; } 100% { left: 150%; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        #me-tab { background-color: #0d0d12; }
+        .profile-header-graphic { width: 100%; height: 150px; background: #1a1a21; }
+        .profile-card { background-color: #1e1e26; border-radius: 0.75rem; padding: 1.5rem; padding-top: 4rem; text-align: center; margin: -60px 1rem 0 1rem; position: relative; border: 1px solid #374151; }
+        .profile-icon { position: absolute; top: -32px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; background-color: #4A5568; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid #0d0d12; }
+        .profile-grid-btn { background-color: transparent; text-align: center; font-size: 0.75rem; color: #9CA3AF; }
+        .profile-grid-btn .icon-wrapper { background-color: #27272a; border-radius: 50%; width: 56px; height: 56px; margin: 0 auto 0.5rem auto; display: flex; align-items: center; justify-content: center; }
+        .profile-grid-btn i { font-size: 1.5rem; }
+        .profile-list-item { background-color: transparent; padding: 1rem 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; }
+        .activity-card-new { background: linear-gradient(145deg, #4a372a, #3a2d24); border-radius: 1rem; padding: 1rem; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; min-height: 90px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #5a473a; }
+        .activity-badge-new { position: absolute; top: -10px; left: 10px; background-color: #5a473a; color: #d1d5db; font-size: 0.7rem; font-weight: 700; padding: 12px 8px 4px 8px; border-radius: 0 0 6px 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+        .activity-content { text-align: right; margin-top: 8px; }
+        .activity-amount-new { font-size: 1.25rem; font-weight: 700; color: white; line-height: 1.2; }
+        .activity-email-new { font-size: 0.75rem; color: #9CA3AF; margin-top: 4px; }
+        .auth-wrapper { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .form-error { border: 1px solid #ef4444 !important; }
+        .error-message { color: #f87171; font-size: 0.75rem; margin-top: -0.5rem; margin-bottom: 0.5rem; text-align: left; }
+
+        /* --- Splash Screen Styles --- */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #111827;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+        .splash-logo {
+            width: 180px;
+            height: auto;
+            animation: splash-bounce 2s infinite ease-in-out;
+        }
+        .splash-text {
+            margin-top: 1rem;
+            color: #FBBF24;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            animation: splash-pulse 1.5s infinite ease-in-out;
+        }
+        @keyframes splash-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes splash-pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="https://files.catbox.moe/ex2ec7.png" alt="CoinUp Logo" class="splash-logo">
+        <p class="splash-text">Loading...</p>
+    </div>
+
+    <div id="loader" class="loader hidden"></div>
+
+    <div id="auth-container" class="hidden">
+        <div class="auth-wrapper">
+            <div id="login-screen" class="p-6 max-w-sm w-full"><h1 class="text-3xl font-bold text-center mb-6">Login</h1><div id="login-form"><input type="email" id="login-email" placeholder="Email" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-transparent"><div id="login-email-error" class="error-message"></div><input type="password" id="login-password" placeholder="Password" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-transparent"><div id="login-password-error" class="error-message"></div><button data-action="login" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">Login</button></div><p class="text-center mt-4">Don't have an account? <a href="#" data-action="show-register" class="text-blue-400">Register</a></p></div>
+            <div id="register-screen" class="hidden p-6 max-w-sm w-full"><h1 class="text-3xl font-bold text-center mb-6">Create Account</h1><div id="register-form"><input type="text" id="register-name" placeholder="Name" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-transparent"><div id="register-name-error" class="error-message"></div><input type="email" id="register-email" placeholder="Email" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-transparent"><div id="register-email-error" class="error-message"></div><input type="password" id="register-password" placeholder="Password" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-transparent"><div id="register-password-error" class="error-message"></div><button data-action="register" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">Register</button></div><p class="text-center mt-4">Already have an account? <a href="#" data-action="show-login" class="text-blue-400">Login</a></p></div>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <div id="main-view">
+            <main id="main-content" class="pb-20">
+                <div id="home-tab" class="tab-content active p-4">
+                    <div id="user-info-card-container"></div>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <button data-action="show-page" data-page="deposit-details-page" class="bg-gray-200 text-black p-3 rounded-lg font-bold text-center flex items-center justify-center gap-2"><i class="fas fa-wallet"></i>Recharge</button>
+                        <button data-action="show-page" data-page="withdraw-page" class="bg-gray-700 p-3 rounded-lg font-bold text-center flex items-center justify-center gap-2"><i class="fas fa-money-bill-transfer"></i>Withdraw</button>
+                    </div>
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-3">VIP Hall</h3>
+                        <div id="homepage-vip-plans" class="space-y-4"></div>
+                    </div>
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-3">Member list</h3>
+                        <div id="latest-activity-feed" class="min-h-[90px]">
+                            <div class="activity-card-new skeleton h-[90px] w-full"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tasks-tab" class="tab-content p-4"><div class="bg-gray-800 p-4 rounded-lg flex justify-around text-center mb-4"><div><p class="text-sm text-gray-400">All tasks for today</p><p id="tasks-total" class="font-bold text-lg">0</p></div><div><p class="text-sm text-gray-400">Total completed tasks</p><p id="tasks-completed-total" class="font-bold text-lg">0</p></div></div><div class="flex bg-gray-800 p-1 rounded-full mb-4"><button data-action="switch-task-view" data-view="in-progress" class="task-view-btn active">In progress</button><button data-action="switch-task-view" data-view="completed" class="task-view-btn">Completed</button></div><div id="task-content-area"><div id="in-progress-view" class="active"></div><div id="completed-view" class="hidden"></div></div></div>
+                <div id="history-tab" class="tab-content p-4"><h2 class="text-2xl font-bold mb-4">Transaction History</h2><div id="transaction-history" class="space-y-3"></div></div>
+                <div id="vip-tab" class="tab-content p-4"><h2 class="text-2xl font-bold mb-4">VIP Plans</h2><div id="vip-plans-container" class="space-y-4"></div></div>
+                <div id="me-tab" class="tab-content"><div id="me-tab-content"></div></div>
+            </main>
+            <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-black flex justify-around p-3 border-t border-gray-700"><button data-action="show-tab" data-tab="home-tab" class="bottom-nav-item active"><i class="fas fa-home fa-lg"></i><span class="block text-xs mt-1">Home</span></button><button data-action="show-tab" data-tab="tasks-tab" class="bottom-nav-item"><i class="fas fa-check-circle fa-lg"></i><span class="block text-xs mt-1">Tasks</span></button><button data-action="show-tab" data-tab="history-tab" class="bottom-nav-item"><i class="fas fa-history fa-lg"></i><span class="block text-xs mt-1">History</span></button><button data-action="show-tab" data-tab="vip-tab" class="bottom-nav-item"><i class="fas fa-star fa-lg"></i><span class="block text-xs mt-1">VIP</span></button><button data-action="show-tab" data-tab="me-tab" class="bottom-nav-item"><i class="fas fa-user fa-lg"></i><span class="block text-xs mt-1">Me</span></button></nav>
+        </div>
+
+        <div id="deposit-details-page" class="page-content p-4"><button data-action="back-to-main" class="mb-4"><i class="fas fa-arrow-left"></i> Back</button><h2 class="text-2xl font-bold mb-4">Deposit</h2><input type="number" id="deposit-amount" placeholder="Minimum 10 USDT" class="w-full bg-gray-800 text-white p-3 rounded mb-4"><button data-action="proceed-to-network" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">Proceed</button></div>
+        <div id="deposit-network-page" class="page-content p-4"><button data-action="back-to-main" class="mb-4"><i class="fas fa-arrow-left"></i> Back</button><h2 class="text-2xl font-bold mb-4">Select Network</h2><div class="space-y-3"><div data-action="select-network" data-network="TRC20-USDT" class="history-card cursor-pointer flex justify-between items-center"><span><i class="fas fa-coins text-green-400 mr-2"></i> TRC20-USDT</span><i class="fas fa-chevron-right"></i></div></div></div>
+        <div id="deposit-qr-page" class="page-content p-4 text-center"><button data-action="back-to-main" class="mb-4 text-left w-full"><i class="fas fa-arrow-left"></i> Back</button><h2 class="text-2xl font-bold my-4">TRC20-USDT Deposit</h2><div class="bg-white p-2 rounded-lg inline-block my-4"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=TW7iG37f5ubUJXWm2h58rcdKBjXDu17Ts" alt="QR Code"></div><p class="mb-2">Address</p><div class="bg-gray-800 p-2 rounded-lg flex items-center justify-between"><span id="qr-address" class="text-sm">TW7iG37f5ubUJXWm2h58rcdKBjXDu17Ts</span><button data-action="copy-address" class="bg-blue-500 p-2 rounded ml-2"><i class="fas fa-copy"></i></button></div><button data-action="submit-deposit" class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-bold mt-6">Recharge Completed</button></div>
+        <div id="withdraw-page" class="page-content p-4"><button data-action="back-to-main" class="mb-4"><i class="fas fa-arrow-left"></i> Back</button><h2 class="text-2xl font-bold mb-4">Withdraw</h2><input type="text" id="withdrawal-address" placeholder="Withdrawal Address (TRC20)" class="w-full bg-gray-800 text-white p-3 rounded mb-4"><input type="number" id="withdrawal-amount" placeholder="Minimum 5 USDT" class="w-full bg-gray-800 text-white p-3 rounded mb-4"><button data-action="submit-withdrawal" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">Submit Withdrawal</button></div>
+        
+        <div id="referral-page" class="page-content p-4">
+            <button data-action="back-to-main" class="mb-4"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Refer and Earn</h2>
+                <button data-action="show-referral-info" class="text-blue-400"><i class="fas fa-info-circle"></i> How it works</button>
+            </div>
+            <div id="referral-content-area"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, push, update, get, off, remove, query, limitToLast } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyBWFeztmk5tZ20ciUfXikpsGDlBOiPdjQE",
+                authDomain: "usdt-89b65.firebaseapp.com",
+                databaseURL: "https://usdt-89b65-default-rtdb.firebaseio.com",
+                projectId: "usdt-89b65",
+                storageBucket: "usdt-89b65.appspot.com",
+                messagingSenderId: "1009030956157",
+                appId: "1:1009030956157:web:148458603745e28ea4dd14"
+            };
+        
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getDatabase(app);
+
+            const state = { currentUser: null, userData: null, vipPlans: {}, dataListeners: [], latestActivities: [], activityInterval: null, activityDisplayIndex: 0, taskResetInterval: null };
+            const dom = { 
+                splash: document.getElementById('splash-screen'),
+                loader: document.getElementById('loader'), 
+                authContainer: document.getElementById('auth-container'), 
+                appContainer: document.getElementById('app-container') 
+            };
+            
+            // --- Splash Screen and Connection Logic ---
+            let isOnline = navigator.onLine;
+            
+            const showInternetError = () => {
+                Swal.fire({
+                    title: 'No Internet Connection',
+                    html: `
+                        <div class="text-center">
+                            <i class="fas fa-times-circle text-red-500" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                            <div class="flex items-center justify-center text-left" style="background-color: #1F2937; padding: 0.75rem; border-radius: 0.5rem;">
+                                <i class="fas fa-info-circle text-blue-500" style="font-size: 1.5rem; margin-right: 0.75rem;"></i>
+                                <span class="text-gray-300">Please check your network and retry.</span>
+                            </div>
+                        </div>
+                    `,
+                    icon: false,
+                    confirmButtonText: 'Retry',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    background: '#111827', 
+                    color: '#FFF',
+                    customClass: {
+                        popup: 'bg-transparent',
+                        title: 'text-2xl font-bold mb-4'
+                    }
+                }).then(() => window.location.reload());
+            };
+
+            const checkConnection = () => {
+                if (!navigator.onLine) {
+                    showInternetError();
+                    return false;
+                }
+                return true;
+            };
+
+            const hideSplash = () => {
+                if (dom.splash) {
+                    dom.splash.style.opacity = 0;
+                    setTimeout(() => {
+                        dom.splash.style.display = "none";
+                    }, 800);
+                }
+            };
+            
+            window.addEventListener('offline', () => { isOnline = false; showInternetError(); });
+            window.addEventListener('online', () => {
+                if (!isOnline) {
+                    isOnline = true;
+                    Swal.fire({
+                        title: 'Connection Restored',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#1F2937', color: '#FFF'
+                    }).then(() => window.location.reload());
+                }
+            });
+
+            if (!checkConnection()) return; // Stop script execution if offline
+
+            // --- Core App Logic ---
+            const showAlert = (title, type = 'success', text = '') => { Swal.fire({ title, text, icon: type, background: '#1F2937', color: '#FFF', timer: 2500, showConfirmButton: false, timerProgressBar: true }); };
+            const showLoader = (show) => dom.loader.classList.toggle('hidden', !show);
+            const showPage = (pageId) => { document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active')); document.getElementById('main-view').style.display = pageId ? 'none' : 'block'; if (pageId) document.getElementById(pageId).classList.add('active'); };
+            const getFormattedDate = () => new Date().toISOString().split('T')[0];
+            const formatMoney = (num) => parseFloat(num || 0).toFixed(2);
+            const logActivity = (data) => {
+                const activityData = { ...data, timestamp: Date.now() };
+                push(ref(db, 'activity'), activityData);
+            };
+            const obfuscateEmail = (email) => {
+                if (!email || email.indexOf('@') < 0) return "a***@c***.com";
+                const [name, domain] = email.split('@');
+                if (name.length <= 4) return `${name.substring(0, 1)}***${name.substring(name.length - 1)}@${domain.split('.')[0]}`;
+                const obfuscatedName = `${name.substring(0, 3)}***${name.substring(name.length - 2)}`;
+                return `${obfuscatedName}@${domain.split('.')[0]}`;
+            };
+            
+            async function initializeAppState(userId) {
+                showLoader(true);
+                try {
+                    const [userSnapshot, vipPlansSnapshot] = await Promise.all([ get(ref(db, `users/${userId}`)), get(ref(db, 'vipPlans')) ]);
+                    state.userData = userSnapshot.val() || { balance: 0, vipLevel: 0, name: 'New User', email: state.currentUser.email, referralCode: 'N/A' };
+                    state.vipPlans = vipPlansSnapshot.val() || {};
+                    renderAllUI();
+                    attachDataListeners(userId);
+                } catch (error) { console.error("Failed to initialize app state:", error); showAlert("Error loading data.", "error"); } 
+                finally { showLoader(false); }
+            }
+
+            function updateActivityDisplay() {
+                const container = document.getElementById('latest-activity-feed');
+                if (!container || state.latestActivities.length === 0) return;
+                const activityToShow = state.latestActivities[state.activityDisplayIndex];
+                const renderCard = (activity) => {
+                    const { vipLevel = 0, amount = 0, email = 'a***@c***.com', type = 'task' } = activity;
+                    let displayText = `+$${formatMoney(amount)}`;
+                    let badgeText = `VIP ${vipLevel}`;
+                    let badgeStyle = '';
+                    if (type === 'register') {
+                        displayText = '+ New Member';
+                        badgeText = 'NEW';
+                        badgeStyle = 'style="background-color: #374151;"';
+                    } else if (type === 'upgrade') {
+                        displayText = 'Level Up!';
+                        badgeText = `VIP ${vipLevel}`;
+                    }
+                    return `<div class="activity-card-new fade-in"><div class="activity-badge-new" ${badgeStyle}>${badgeText}</div><div class="activity-content"><p class="activity-amount-new">${displayText}</p><p class="activity-email-new">${obfuscateEmail(email)}</p></div></div>`;
+                };
+                container.innerHTML = renderCard(activityToShow);
+                state.activityDisplayIndex = (state.activityDisplayIndex + 1) % Math.min(state.latestActivities.length, 6);
+            }
+
+            function startActivityCycle() {
+                if (state.activityInterval) clearInterval(state.activityInterval);
+                if (state.latestActivities.length > 0) {
+                    state.activityDisplayIndex = 0;
+                    updateActivityDisplay();
+                    state.activityInterval = setInterval(updateActivityDisplay, 3000);
+                }
+            }
+            
+            function attachDataListeners(userId) {
+                detachDataListeners();
+                const userRef = ref(db, `users/${userId}`);
+                const vipPlansRef = ref(db, 'vipPlans');
+                const notificationsRef = ref(db, `notifications/${userId}`);
+                const announcementsRef = ref(db, 'announcements');
+                const userListener = onValue(userRef, (snapshot) => { if(snapshot.exists()) { state.userData = snapshot.val(); renderAllUI(); } });
+                const vipListener = onValue(vipPlansRef, (snapshot) => { if(snapshot.exists()){ state.vipPlans = snapshot.val(); renderVipPlans(); }});
+                const notificationListener = onValue(query(notificationsRef), (snapshot) => {
+                    snapshot.forEach(child => {
+                        const notification = child.val();
+                        showAlert(notification.title, notification.type, notification.text);
+                        remove(child.ref);
+                    });
+                });
+                const announcementListener = onValue(query(announcementsRef, limitToLast(1)), (snapshot) => {
+                    if (snapshot.exists()) {
+                        const [announcementId] = Object.keys(snapshot.val());
+                        const announcement = snapshot.val()[announcementId];
+                        const seen = localStorage.getItem('seenAnnouncement') === announcementId;
+                        if (!seen) {
+                            Swal.fire({ title: announcement.title, text: announcement.message, icon: 'info', background: '#1F2937', color: '#FFF' })
+                               .then(() => localStorage.setItem('seenAnnouncement', announcementId));
+                        }
+                    }
+                });
+                state.dataListeners.push({ ref: userRef, listener: userListener });
+                state.dataListeners.push({ ref: vipPlansRef, listener: vipListener });
+                state.dataListeners.push({ ref: notificationsRef, listener: notificationListener });
+                state.dataListeners.push({ ref: announcementsRef, listener: announcementListener });
+                const activityQuery = query(ref(db, 'activity'), limitToLast(50));
+                const activityListener = onValue(activityQuery, (snapshot) => {
+                    const container = document.getElementById('latest-activity-feed');
+                    if (snapshot.exists()) {
+                        const activities = [];
+                        snapshot.forEach(child => { activities.push(child.val()); });
+                        state.latestActivities = activities.reverse();
+                        startActivityCycle();
+                    } else {
+                        state.latestActivities = [];
+                        if (state.activityInterval) clearInterval(state.activityInterval);
+                        state.activityInterval = null;
+                        if (container) container.innerHTML = `<div class="activity-card-new skeleton h-[90px] w-full"></div>`;
+                    }
+                });
+                state.dataListeners.push({ ref: activityQuery, listener: activityListener });
+            }
+
+            function detachDataListeners() { 
+                state.dataListeners.forEach(item => off(item.ref, 'value', item.listener)); 
+                state.dataListeners = []; 
+                if (state.activityInterval) clearInterval(state.activityInterval);
+                if (state.taskResetInterval) clearInterval(state.taskResetInterval);
+                state.activityInterval = null;
+                state.taskResetInterval = null;
+            }
+            
+            onAuthStateChanged(auth, (user) => {
+                setTimeout(() => { // Add a small delay for a smoother splash transition
+                    const loggedIn = !!user;
+                    dom.authContainer.classList.toggle('hidden', loggedIn);
+                    dom.appContainer.classList.toggle('hidden', !loggedIn);
+                    if (loggedIn) { 
+                        state.currentUser = user; 
+                        initializeAppState(user.uid); 
+                    } else { 
+                        state.currentUser = null; 
+                        state.userData = null;
+                        detachDataListeners(); 
+                    }
+                    setupFormValidation();
+                    hideSplash();
+                }, 2500); // Increased delay to match animation feel
+            });
+
+            function renderAllUI() { if (!state.userData) return; renderUserCard(); renderProfilePage(); renderVipPlans(); renderTaskPage(); }
+            function renderUserCard() { document.getElementById('user-info-card-container').innerHTML = `<div class="user-info-card my-4"><div><p class="text-sm text-gray-400">Total Balance</p><h1 id="balance-display" class="text-3xl font-bold">$${formatMoney(state.userData.balance || 0)}</h1><p id="user-email-card" class="text-xs mt-1 text-gray-400">${state.userData.email}</p></div><div class="text-right self-center"><p id="user-vip-level-card" class="text-sm font-semibold bg-yellow-500 text-black px-3 py-1 rounded-full inline-block">VIP ${state.userData.vipLevel || 0}</p></div></div>`; }
+            function renderProfilePage() { document.getElementById('me-tab-content').innerHTML = `<div class="profile-header-graphic"></div><div class="profile-card"><div class="profile-icon"><i class="fas fa-user fa-2x"></i></div><div class="flex items-center justify-center gap-2"><p class="font-semibold text-lg">${state.userData.name || 'User'}</p><span class="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">VIP ${state.userData.vipLevel || 0}</span></div><div class="flex justify-around mt-4"><div class="text-center"><p class="font-bold text-xl">$${formatMoney(state.userData.balance || 0)}</p><p class="text-xs text-gray-400">Total balance (USDT)</p></div><div class="text-center"><p id="me-total-earned" class="font-bold text-xl">$0.00</p><p class="text-xs text-gray-400">Total earned (USDT)</p></div></div></div><div class="grid grid-cols-4 gap-4 my-6 px-4"><button data-action="show-page" data-page="deposit-details-page" class="profile-grid-btn"><span class="icon-wrapper bg-green-500/20 text-green-400"><i class="fas fa-wallet"></i></span>Recharge</button><button data-action="show-page" data-page="withdraw-page" class="profile-grid-btn"><span class="icon-wrapper bg-purple-500/20 text-purple-400"><i class="fas fa-money-bill-transfer"></i></span>Withdraw</button><button data-action="show-account" class="profile-grid-btn"><span class="icon-wrapper bg-orange-500/20 text-orange-400"><i class="fas fa-university"></i></span>Account</button><button data-action="show-tab" data-tab="history-tab" class="profile-grid-btn"><span class="icon-wrapper bg-pink-500/20 text-pink-400"><i class="fas fa-chart-line"></i></span>Financial records</button></div><div class="px-4 space-y-3"><button data-action="show-referral-page" class="w-full profile-list-item text-left"><span><i class="fas fa-users mr-2 text-gray-400"></i>Refer and Earn</span><i class="fas fa-chevron-right text-gray-600"></i></button><button data-action="customer-support" class="w-full profile-list-item text-left"><span><i class="fas fa-headset mr-2 text-gray-400"></i>Customer Support</span><i class="fas fa-chevron-right text-gray-600"></i></button><button data-action="change-password" class="w-full profile-list-item text-left"><span><i class="fas fa-key mr-2 text-gray-400"></i>Change Password</span><i class="fas fa-chevron-right text-gray-600"></i></button><button data-action="logout" class="w-full profile-list-item text-left"><span><i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>Sign out</span><i class="fas fa-chevron-right text-gray-600"></i></button></div>`; calculateTotalEarnings(state.currentUser.uid); }
+            function renderVipPlans() { if (!state.userData || !state.vipPlans) return; const containers = [document.getElementById('vip-plans-container'), document.getElementById('homepage-vip-plans')]; if (Object.keys(state.vipPlans).length === 0) { containers.forEach(c => c.innerHTML = '<p class="text-center text-gray-400">VIP plans not available.</p>'); return; } const cardsHtml = Object.entries(state.vipPlans).map(([levelKey, plan]) => { const level = parseInt(levelKey); let actionHTML = `<button class="unlock-btn" data-action="unlock-vip" data-level="${level}" data-price="${plan.price}">${formatMoney(plan.price || 0)} USDT Unlock</button>`; if (state.userData.vipLevel === level) { actionHTML = `<div class="active-badge">Active</div>`; } else if (state.userData.vipLevel > level) { actionHTML = ``; } return `<div class="vip-card-new"><div class="vip-badge">VIP ${level}</div><div class="vip-content"><div class="vip-logo"><i class="fab fa-apple fa-3x"></i></div><div class="vip-details"><div class="detail-row"><span>Daily tasks</span><span class="value">${plan.dailyTasks || 0}</span></div><div class="detail-row"><span>Days</span><span class="value">${plan.days || 0}</span></div><div class="detail-row"><span>Daily profit</span><span class="value">${formatMoney(plan.dailyProfit || 0)} USDT</span></div><div class="detail-row"><span>The total profit</span><span class="value">${formatMoney(plan.totalProfit || 0)} USDT</span></div></div></div><div class="vip-action">${actionHTML}</div></div>`; }).join(''); containers.forEach(c => c.innerHTML = cardsHtml); }
+            
+            function renderReferralPage() {
+                const container = document.getElementById('referral-content-area');
+                if (!container || !state.userData) return;
+
+                const referralCode = state.userData.referralCode || 'Generating...';
+                const hasReferredBy = !!state.userData.referredBy;
+
+                let friendCodeSection = '';
+                if (!hasReferredBy) {
+                    friendCodeSection = `
+                        <div class="bg-gray-800 p-4 rounded-lg mt-6">
+                            <h3 class="font-bold mb-2">Enter Friend's Code</h3>
+                            <p class="text-xs text-gray-400 mb-3">Enter a friend's referral code once to link accounts. This cannot be undone.</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="friends-code-input" placeholder="Friend's Code" class="w-full bg-gray-700 text-white p-2 rounded">
+                                <button data-action="submit-friends-code" class="bg-blue-600 hover:bg-blue-700 px-4 rounded font-bold">Submit</button>
+                            </div>
+                        </div>`;
+                }
+
+                container.innerHTML = `
+                    <div class="bg-gray-800 p-4 rounded-lg text-center">
+                        <h3 class="font-bold mb-2">Your Referral Code</h3>
+                        <p class="text-xs text-gray-400 mb-3">Share this code with your friends. You'll earn a 50% commission on their first deposit!</p>
+                        <div class="bg-gray-900 p-2 rounded-lg flex items-center justify-between">
+                            <span id="user-referral-code" class="text-lg font-mono tracking-widest">${referralCode}</span>
+                            <button data-action="copy-referral-code" class="bg-blue-500 p-2 rounded ml-2"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    ${friendCodeSection}
+                `;
+            }
+
+            async function renderTaskPage() {
+                if (!state.userData || !state.currentUser) return;
+                if (state.taskResetInterval) clearInterval(state.taskResetInterval);
+
+                const inProgressView = document.getElementById('in-progress-view');
+                const completedView = document.getElementById('completed-view');
+                const tasksTotalEl = document.getElementById('tasks-total');
+                
+                try {
+                    const vipLevel = state.userData.vipLevel || 0;
+                    if (vipLevel === 0) {
+                        tasksTotalEl.textContent = '0';
+                        inProgressView.innerHTML = `<div class="text-center py-8"><p class="text-gray-400 mb-4">You must be a VIP to perform tasks.</p><button class="bg-blue-600 px-4 py-2 rounded-full font-bold" data-action="show-tab" data-tab="vip-tab">Upgrade Now</button></div>`;
+                        completedView.innerHTML = '<p class="text-center text-gray-500 py-8">No tasks completed</p>';
+                        return;
+                    }
+
+                    const vipData = state.vipPlans[vipLevel];
+                    if (!vipData) throw new Error('Your VIP plan could not be found.');
+                    tasksTotalEl.textContent = vipData.dailyTasks || 0;
+                    
+                    const tasksRef = ref(db, `tasks/${state.currentUser.uid}`);
+                    const lastTaskQuery = query(tasksRef, limitToLast(1));
+                    const snapshot = await get(lastTaskQuery);
+                    
+                    let lastTask = null;
+                    if (snapshot.exists()) {
+                        const lastTaskKey = Object.keys(snapshot.val())[0];
+                        lastTask = snapshot.val()[lastTaskKey];
+                    }
+
+                    const cooldown = 24 * 60 * 60 * 1000;
+                    const isTaskAvailable = !lastTask || (Date.now() - lastTask.timestamp > cooldown);
+                    
+                    const taskCardHTML = (isCompleted, taskData) => {
+                        let buttonOrStatus = isCompleted 
+                            ? '<span class="text-green-500 font-bold">Completed</span>'
+                            : '<button data-action="complete-task" class="bg-blue-600 px-4 py-2 rounded-full font-bold">Complete</button>';
+                        let timerHtml = '';
+                        if (isCompleted) {
+                            const nextReset = taskData.timestamp + cooldown;
+                            timerHtml = `<p id="task-reset-timer" class="text-xs text-gray-400 mt-2"></p>`;
+                            state.taskResetInterval = setInterval(() => {
+                                const diff = nextReset - Date.now();
+                                if (diff <= 0) {
+                                    document.getElementById('task-reset-timer').textContent = "New tasks available!";
+                                    clearInterval(state.taskResetInterval);
+                                    renderTaskPage();
+                                } else {
+                                    const h = Math.floor(diff / 3.6e6);
+                                    const m = Math.floor((diff % 3.6e6) / 6e4);
+                                    const s = Math.floor((diff % 6e4) / 1000);
+                                    document.getElementById('task-reset-timer').textContent = `New tasks in: ${h}h ${m}m ${s}s`;
+                                }
+                            }, 1000);
+                        }
+                        return `<div class="bg-gray-800 p-4 rounded-lg"><div class="flex justify-between items-center"><div><h4 class="font-bold">Daily Task</h4><p class="text-sm text-green-400 font-semibold mt-1">Reward: $${formatMoney(vipData.dailyProfit || 0)}</p></div>${buttonOrStatus}</div>${timerHtml}</div>`;
+                    };
+
+                    if (isTaskAvailable) {
+                        inProgressView.innerHTML = taskCardHTML(false, null);
+                        completedView.innerHTML = '<p class="text-center text-gray-500 py-8">No tasks completed in the last 24 hours.</p>';
+                    } else {
+                        completedView.innerHTML = taskCardHTML(true, lastTask);
+                        inProgressView.innerHTML = '<p class="text-center text-gray-500 py-8">Daily task already completed.</p>';
+                    }
+                } catch(error) {
+                    inProgressView.innerHTML = `<p class="text-red-500 text-center">${error.message}</p>`;
+                } finally {
+                    calculateTotalCompletedTasks(state.currentUser.uid);
+                }
+            }
+            async function loadTransactionHistory(userId) {
+                const container = document.getElementById('transaction-history');
+                try {
+                    const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([ get(ref(db, `deposits/${userId}`)), get(ref(db, `withdrawals/${userId}`)) ]);
+                    const deposits = depositsSnapshot.exists() ? Object.entries(depositsSnapshot.val()).map(([id, d]) => ({...d, id, type: 'Deposit'})) : [];
+                    const withdrawals = withdrawalsSnapshot.exists() ? Object.entries(withdrawalsSnapshot.val()).map(([id, w]) => ({...w, id, type: 'Withdrawal'})) : [];
+                    const transactions = [...deposits, ...withdrawals].sort((a, b) => b.timestamp - a.timestamp);
+                    if (transactions.length === 0) { container.innerHTML = '<p class="text-center text-gray-400">No transactions yet.</p>'; return; }
+                    container.innerHTML = transactions.map(t => {
+                        const isDeposit = t.type === 'Deposit';
+                        const statusColor = t.status === 'approved' ? 'text-green-500' : t.status === 'rejected' ? 'text-red-500' : 'text-yellow-500';
+                        const sign = isDeposit && t.status === 'approved' ? '+' : (t.type === 'Withdrawal' ? '-' : '');
+                        const dataAttrs = Object.entries(t).map(([key, value]) => `data-${key}="${value}"`).join(' ');
+                        return `<div class="history-card" data-action="show-transaction-details" ${dataAttrs}><div class="flex items-center gap-4"><div><p class="font-bold">${t.type}</p><p class="text-sm text-gray-400">${new Date(t.timestamp).toLocaleDateString()}</p></div></div><div><p class="font-bold text-lg text-right ${statusColor}">${sign}$${formatMoney(t.amount || 0)}</p><p class="text-sm text-gray-400 text-right capitalize">${t.status}</p></div></div>`;
+                    }).join('');
+                } catch (error) { container.innerHTML = '<p class="text-center text-red-500">Could not load history.</p>'; }
+            }
+            async function calculateTotalEarnings(userId) { const snapshot = await get(ref(db, `tasks/${userId}`)); let total = 0; if(snapshot.exists()) { Object.values(snapshot.val()).forEach(task => total += task.profit); } const el = document.getElementById('me-total-earned'); if(el) el.textContent = `$${formatMoney(total)}`; }
+            async function calculateTotalCompletedTasks(userId) { const snapshot = await get(ref(db, `tasks/${userId}`)); let total = 0; if(snapshot.exists()) { total = Object.keys(snapshot.val()).length; } const el = document.getElementById('tasks-completed-total'); if(el) el.textContent = total; }
+
+            const actions = {
+                login: async (btn) => {
+                    btn.disabled = true;
+                    try {
+                        await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+                    } catch (error) {
+                        let message = 'An unexpected error occurred.';
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                            case 'auth/invalid-email': message = 'Invalid email address.'; break;
+                            case 'auth/wrong-password': message = 'Incorrect password.'; break;
+                            case 'auth/invalid-credential': message = 'Invalid email or password.'; break;
+                        }
+                        showAlert('Login Failed', 'error', message);
+                    } finally { btn.disabled = false; }
+                },
+                register: async (btn) => {
+                    btn.disabled = true;
+                    try {
+                        const name = document.getElementById('register-name').value;
+                        const email = document.getElementById('register-email').value;
+                        const cred = await createUserWithEmailAndPassword(auth, email, document.getElementById('register-password').value);
+                        
+                        let referralCode = '';
+                        let isUnique = false;
+                        while(!isUnique) {
+                            referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                            const codeRef = ref(db, `referralCodes/${referralCode}`);
+                            const snapshot = await get(codeRef);
+                            if (!snapshot.exists()) {
+                                isUnique = true;
+                            }
+                        }
+
+                        const userData = {
+                            name,
+                            email,
+                            balance: 0,
+                            vipLevel: 0,
+                            joinDate: Date.now(),
+                            referralCode: referralCode
+                        };
+                        
+                        const updates = {};
+                        updates[`users/${cred.user.uid}`] = userData;
+                        updates[`referralCodes/${referralCode}`] = { uid: cred.user.uid };
+                        await update(ref(db), updates);
+
+                        showAlert('Registration Successful!', 'success');
+                        logActivity({ type: 'register', email, name, vipLevel: 0, amount: 0 });
+
+                    } catch (error) {
+                        let message = 'An unexpected error occurred.';
+                        switch (error.code) {
+                            case 'auth/email-already-in-use': message = 'This email is already registered.'; break;
+                            case 'auth/invalid-email': message = 'Please enter a valid email address.'; break;
+                            case 'auth/weak-password': message = 'Password must be at least 6 characters.'; break;
+                        }
+                        showAlert('Registration Failed', 'error', message);
+                    } finally { btn.disabled = false; }
+                },
+                logout: () => signOut(auth),
+                'show-register': () => { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('register-screen').classList.remove('hidden'); setupFormValidation(); },
+                'show-login': () => { document.getElementById('register-screen').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); setupFormValidation(); },
+                'show-page': (el) => showPage(el.dataset.page), 'back-to-main': () => showPage(null),
+                'show-tab': (el) => { const tabId = el.dataset.tab; document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === tabId)); document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tabId)); if(tabId === 'history-tab') { loadTransactionHistory(state.currentUser.uid); } if(tabId === 'tasks-tab') { renderTaskPage(); } },
+                'switch-task-view': (el) => { const viewId = el.dataset.view; document.querySelectorAll('.task-view-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); document.getElementById('in-progress-view').style.display = viewId === 'in-progress' ? 'block' : 'none'; document.getElementById('completed-view').style.display = viewId === 'completed' ? 'block' : 'none'; },
+                'proceed-to-network': () => { const amount = parseFloat(document.getElementById('deposit-amount').value); if (isNaN(amount) || amount < 10) { return showAlert('Invalid Amount', 'error', 'Minimum deposit is 10 USDT.'); } showPage('deposit-network-page'); },
+                'select-network': () => showPage('deposit-qr-page'), 
+                'copy-address': () => {
+                    navigator.clipboard.writeText(document.getElementById('qr-address').textContent).then(() => showAlert('Address Copied!', 'success'));
+                },
+                'show-account': () => showAlert('Coming Soon', 'info', 'This feature is for display.'), 
+                'change-password': async () => {
+                    try {
+                        await sendPasswordResetEmail(auth, state.currentUser.email);
+                        showAlert('Check Your Email', 'success', 'A password reset link has been sent to your email address.');
+                    } catch (error) { showAlert('Error', 'error', 'Could not send reset email. Please try again later.'); }
+                },
+                'customer-support': () => { window.location.href = 'https://t.me/your-support-channel'; },
+                'show-transaction-details': (el) => {
+                    const { type, amount, status, timestamp, address, method } = el.dataset;
+                    const time = new Date(parseInt(timestamp)).toLocaleString();
+                    const detailsHtml = `<div class="text-left text-sm space-y-2"><p><strong>Type:</strong> ${type}</p><p><strong>Amount:</strong> ${formatMoney(amount)} USDT</p><p><strong>Status:</strong> <span class="capitalize font-semibold">${status}</span></p><p><strong>Date:</strong> ${time}</p>${address ? `<p><strong>Address:</strong> ${address}</p>` : ''}${method ? `<p><strong>Method:</strong> ${method}</p>` : ''}</div>`;
+                    Swal.fire({ title: 'Transaction Details', html: detailsHtml, background: '#1F2937', color: '#FFF' });
+                },
+                'submit-deposit': async (btn) => { 
+                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
+                    try { 
+                        const amount = parseFloat(document.getElementById('deposit-amount').value); 
+                        if (isNaN(amount) || amount < 10) throw new Error('Minimum deposit is 10 USDT.'); 
+                        
+                        const depositData = { 
+                            status: 'pending', 
+                            amount, 
+                            method: 'TRC20-USDT', 
+                            timestamp: Date.now() 
+                        };
+
+                        if (state.userData.referredBy) {
+                            depositData.referredBy = state.userData.referredBy;
+                        }
+
+                        const newDepositRef = push(ref(db, `deposits/${state.currentUser.uid}`)); 
+                        await set(newDepositRef, depositData); 
+                        
+                        showAlert('Deposit request submitted!', 'success', 'Your deposit is pending approval by an administrator.'); 
+                        showPage(null); 
+                        document.querySelector('[data-tab="history-tab"]').click(); 
+                    } catch (error) { 
+                        showAlert('Error', 'error', error.message); 
+                    } finally { 
+                        btn.disabled = false; btn.innerHTML = 'Recharge Completed'; 
+                    } 
+                },
+                'submit-withdrawal': async (btn) => {
+                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    try {
+                        const amount = parseFloat(document.getElementById('withdrawal-amount').value);
+                        const address = document.getElementById('withdrawal-address').value;
+                        if (!address || isNaN(amount)) throw new Error('Invalid address or amount.');
+                        if (amount < 5) throw new Error('Minimum withdrawal is 5 USDT.');
+                        
+                        const userRef = ref(db, `users/${state.currentUser.uid}`);
+                        const userSnapshot = await get(userRef);
+                        const userData = userSnapshot.val();
+                        if (amount > userData.balance) throw new Error('Insufficient balance.');
+                        
+                        const withdrawalsSnapshot = await get(ref(db, `withdrawals/${state.currentUser.uid}`));
+                        if (withdrawalsSnapshot.exists() && Object.values(withdrawalsSnapshot.val()).some(w => w.status === 'pending')) throw new Error('You already have a pending withdrawal request.');
+                        
+                        await update(userRef, { balance: userData.balance - amount });
+                        await push(ref(db, `withdrawals/${state.currentUser.uid}`), { amount, address, status: 'pending', timestamp: Date.now() });
+                        
+                        showAlert('Withdrawal request submitted!', 'success');
+                        showPage(null);
+                    } catch(error) { showAlert('Error', 'error', error.message); } 
+                    finally { btn.disabled = false; btn.innerHTML = 'Submit Withdrawal'; }
+                },
+                'unlock-vip': async (btn) => {
+                    const level = parseInt(btn.dataset.level);
+                    const price = parseFloat(btn.dataset.price);
+                    if (state.userData.balance < price) return showAlert('Insufficient balance.', 'error');
+                    const result = await Swal.fire({ title: `Unlock VIP ${level}?`, text: `$${formatMoney(price)} will be deducted.`, icon: 'question', background: '#1F2937', color: '#FFF', showCancelButton: true, confirmButtonColor: '#3B82F6', cancelButtonColor: '#6B7280', confirmButtonText: 'Yes, unlock it!' });
+                    if (result.isConfirmed) {
+                        btn.disabled = true; showLoader(true);
+                        try {
+                            await update(ref(db, `users/${state.currentUser.uid}`), {
+                                balance: state.userData.balance - price,
+                                vipLevel: level
+                            });
+                            
+                            const tasksRef = ref(db, `tasks/${state.currentUser.uid}`);
+                            const lastTaskQuery = query(tasksRef, limitToLast(1));
+                            const snapshot = await get(lastTaskQuery);
+                            if (snapshot.exists()) {
+                                const lastTaskKey = Object.keys(snapshot.val())[0];
+                                await remove(ref(db, `tasks/${state.currentUser.uid}/${lastTaskKey}`));
+                            }
+
+                            logActivity({ type: 'upgrade', vipLevel: level, amount: price, email: state.userData.email, name: state.userData.name });
+                            showAlert(`Unlocked VIP ${level}!`, 'success');
+                        } catch (error) { showAlert('Error', 'error', error.message); } 
+                        finally { showLoader(false); btn.disabled = false; }
+                    }
+                },
+                'complete-task': async (btn) => {
+                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    try {
+                        const vipData = state.vipPlans[state.userData.vipLevel];
+                        if (!vipData) throw new Error('VIP details not found.');
+                        
+                        const userRef = ref(db, `users/${state.currentUser.uid}`);
+                        await update(userRef, {
+                            balance: state.userData.balance + vipData.dailyProfit
+                        });
+                        
+                        await push(ref(db, `tasks/${state.currentUser.uid}`), { completed: true, profit: vipData.dailyProfit, timestamp: Date.now() });
+                        
+                        logActivity({ type: 'task', vipLevel: state.userData.vipLevel, amount: vipData.dailyProfit, email: state.userData.email, name: state.userData.name });
+                        
+                        showAlert('Task completed!', 'success', `You earned $${formatMoney(vipData.dailyProfit || 0)}.`);
+                        renderTaskPage();
+
+                    } catch (error) { showAlert('Error', 'error', error.message); } 
+                    finally { btn.disabled = false; btn.innerHTML = 'Complete'; }
+                },
+                'show-referral-page': () => { showPage('referral-page'); renderReferralPage(); },
+                'show-referral-info': () => {
+                    Swal.fire({
+                        title: 'How Referrals Work',
+                        html: `<div class="text-left text-sm space-y-3">
+                                <p>1. Share your unique referral code with friends.</p>
+                                <p>2. Your friend enters your code in their 'Refer and Earn' section.</p>
+                                <p>3. When your friend makes their first deposit and it is approved by an admin, you will automatically receive a commission of 50% of their deposit amount added to your balance.</p>
+                                <p><strong>Note:</strong> Each user can only enter one friend's code.</p>
+                               </div>`,
+                        icon: 'info',
+                        background: '#1F2937',
+                        color: '#FFF'
+                    });
+                },
+                'copy-referral-code': (btn) => {
+                    navigator.clipboard.writeText(document.getElementById('user-referral-code').textContent).then(() => showAlert('Code Copied!', 'success'));
+                },
+                'submit-friends-code': async (btn) => {
+                    const input = document.getElementById('friends-code-input');
+                    const code = input.value.trim().toUpperCase();
+                    if (!code) return showAlert('Error', 'error', 'Please enter a code.');
+                    if (code === state.userData.referralCode) return showAlert('Error', 'error', "You cannot enter your own code.");
+
+                    btn.disabled = true; showLoader(true);
+                    try {
+                        const codeRef = ref(db, `referralCodes/${code}`);
+                        const snapshot = await get(codeRef);
+                        if (!snapshot.exists()) throw new Error('Invalid referral code.');
+                        
+                        const referrerUid = snapshot.val().uid;
+                        if (referrerUid === state.currentUser.uid) throw new Error("You cannot enter your own code.");
+
+                        await update(ref(db, `users/${state.currentUser.uid}`), { referredBy: referrerUid });
+                        showAlert('Success!', 'success', "You have successfully added your friend's code.");
+                    } catch (error) {
+                        showAlert('Error', 'error', error.message);
+                    } finally {
+                        btn.disabled = false; showLoader(false);
+                    }
+                }
+            };
+
+            const setupFormValidation = () => {
+                const validate = (formSelector, buttonSelector, fields) => {
+                    const form = document.querySelector(formSelector);
+                    if (!form) return;
+                    const button = form.querySelector(buttonSelector);
+                    const checkValidity = () => {
+                        let allValid = true;
+                        fields.forEach(field => {
+                            const input = document.getElementById(field.id);
+                            const errorDiv = document.getElementById(`${field.id}-error`);
+                            const value = input.value.trim();
+                            let error = '';
+                            if (value === '') {
+                                error = 'This field is required.';
+                                allValid = false;
+                            }
+                            input.classList.toggle('form-error', !!error);
+                            if (errorDiv) errorDiv.textContent = error;
+                        });
+                        if (button) button.disabled = !allValid;
+                    };
+                    fields.forEach(field => document.getElementById(field.id).addEventListener('input', checkValidity));
+                    checkValidity();
+                };
+                validate('#login-form', '[data-action="login"]', [{id: 'login-email'}, {id: 'login-password'}]);
+                validate('#register-form', '[data-action="register"]', [{id: 'register-name'}, {id: 'register-email'}, {id: 'register-password'}]);
+            };
+
+            document.addEventListener('click', (e) => {
+                const targetElement = e.target.closest('[data-action]');
+                if (targetElement) { e.preventDefault(); const action = targetElement.dataset.action; if (actions[action]) actions[action](targetElement); }
+            });
+            
+            setupFormValidation();
+        });
+    </script>
+</body>
+</html>
